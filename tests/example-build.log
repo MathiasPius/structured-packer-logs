@@ -1,0 +1,56 @@
+1632068173,,ui,say,Debug mode enabled. Builds will not be parallelized.
+1632068173,,ui,say,==> qemu.rootfs: Retrieving ISO
+1632068173,,ui,say,==> qemu.rootfs: Trying https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/alpine-virt-3.14.2-x86_64.iso
+1632068173,,ui,say,==> qemu.rootfs: Trying https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/alpine-virt-3.14.2-x86_64.iso?checksum=sha256%3Afcba6ecc8419da955d326a12b2f6d9d8f885a420a1112e0cf1910914c4c814a7
+1632068173,,ui,say,==> qemu.rootfs: https://dl-cdn.alpinelinux.org/alpine/v3.14/releases/x86_64/alpine-virt-3.14.2-x86_64.iso?checksum=sha256%3Afcba6ecc8419da955d326a12b2f6d9d8f885a420a1112e0cf1910914c4c814a7 => /home/myname/Projects/ax01/packer_cache/200ae6ba3ea0ab7789edc59795ae5d2b0c25e2f6.iso
+1632068173,,ui,say,==> qemu.rootfs: Starting HTTP server on port 8678
+1632068173,,ui,say,==> qemu.rootfs: Found port for communicator (SSH%!(PACKER_COMMA) WinRM%!(PACKER_COMMA) etc): 3752.
+1632068173,,ui,say,==> qemu.rootfs: Looking for available port between 5900 and 6000 on 127.0.0.1
+1632068173,,ui,say,==> qemu.rootfs: Starting VM%!(PACKER_COMMA) booting from CD-ROM
+1632068175,,ui,say,==> qemu.rootfs: Waiting 5s for boot...
+1632068180,,ui,say,==> qemu.rootfs: Connecting to VM via VNC (127.0.0.1:5963)
+1632068180,,ui,say,==> qemu.rootfs: Typing the boot command over VNC...
+1632068181,,ui,message,    qemu.rootfs: Not using a NetBridge -- skipping StepWaitGuestAddress
+1632068181,,ui,say,==> qemu.rootfs: Using SSH communicator to connect: 127.0.0.1
+1632068181,,ui,say,==> qemu.rootfs: Waiting for SSH to become available...
+1632068214,,ui,say,==> qemu.rootfs: Connected to SSH!
+1632068214,,ui,say,==> qemu.rootfs: Gracefully halting virtual machine...
+1632068217,,ui,say,==> qemu.rootfs: Converting hard drive...
+1632068217,,ui,say,==> qemu.rootfs: Running post-processor:  (type manifest)
+1632068217,,ui,say,==> qemu.rootfs: Running post-processor:  (type checksum)
+1632068218,,ui,say,==> qemu.rootfs: Running post-processor:  (type compress)
+1632068218,,ui,say,==> qemu.rootfs (compress): Using pgzip compression with 16 cores for alpine/builds/rootfs.tar.gz
+1632068218,,ui,say,==> qemu.rootfs (compress): Tarring alpine/builds/rootfs.tar.gz with pgzip
+1632068218,,ui,say,==> qemu.rootfs (compress): Archive alpine/builds/rootfs.tar.gz completed
+1632068218,,ui,say,Build 'qemu.rootfs' finished after 45 seconds 498 milliseconds.
+1632068218,,ui,say,\n==> Wait completed after 45 seconds 499 milliseconds
+1632068218,,ui,say,\n==> Builds finished. The artifacts of successful builds are:
+1632068218,qemu.rootfs,artifact-count,4
+1632068218,qemu.rootfs,artifact,0,builder-id,transcend.qemu
+1632068218,qemu.rootfs,artifact,0,id,VM
+1632068218,qemu.rootfs,artifact,0,string,VM files in directory: alpinebuilds
+1632068218,qemu.rootfs,artifact,0,files-count,1
+1632068218,qemu.rootfs,artifact,0,file,0,alpinebuilds/rootfs
+1632068218,qemu.rootfs,artifact,0,end
+1632068218,,ui,say,--> qemu.rootfs: VM files in directory: alpinebuilds
+1632068218,qemu.rootfs,artifact,1,builder-id,transcend.qemu
+1632068218,qemu.rootfs,artifact,1,id,VM
+1632068218,qemu.rootfs,artifact,1,string,VM files in directory: alpinebuilds
+1632068218,qemu.rootfs,artifact,1,files-count,1
+1632068218,qemu.rootfs,artifact,1,file,0,alpinebuilds/rootfs
+1632068218,qemu.rootfs,artifact,1,end
+1632068218,,ui,say,--> qemu.rootfs: VM files in directory: alpinebuilds
+1632068218,qemu.rootfs,artifact,2,builder-id,packer.post-processor.checksum
+1632068218,qemu.rootfs,artifact,2,id,
+1632068218,qemu.rootfs,artifact,2,string,Created artifact from files: alpinebuilds/rootfs
+1632068218,qemu.rootfs,artifact,2,files-count,1
+1632068218,qemu.rootfs,artifact,2,file,0,alpinebuilds/rootfs
+1632068218,qemu.rootfs,artifact,2,end
+1632068218,,ui,say,--> qemu.rootfs: Created artifact from files: alpinebuilds/rootfs
+1632068218,qemu.rootfs,artifact,3,builder-id,packer.post-processor.compress
+1632068218,qemu.rootfs,artifact,3,id,
+1632068218,qemu.rootfs,artifact,3,string,compressed artifacts in: alpine/builds/rootfs.tar.gz
+1632068218,qemu.rootfs,artifact,3,files-count,1
+1632068218,qemu.rootfs,artifact,3,file,0,alpine/builds/rootfs.tar.gz
+1632068218,qemu.rootfs,artifact,3,end
+1632068218,,ui,say,--> qemu.rootfs: compressed artifacts in: alpine/builds/rootfs.tar.gz

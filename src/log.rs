@@ -1,6 +1,9 @@
 use std::{collections::HashMap, convert::TryFrom, str::Split};
 
-use crate::{error::Error, event::{Artifact, Build, Event, EventKind, UI}};
+use crate::{
+    error::Error,
+    event::{Artifact, Build, Event, EventKind, UI},
+};
 
 /// TODO: Replace error type with actual error.
 impl TryFrom<PartialArtifactLog> for Artifact {
@@ -46,15 +49,6 @@ impl Default for PartialArtifactLog {
     }
 }
 
-fn expect_message(structure: &'static str, expected: &'static str, message: &str) {
-    if message != expected {
-        panic!(
-            "unexpected message {} in {}, expected '{}'",
-            message, structure, expected
-        );
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Decoding {
     Partial,
@@ -64,18 +58,35 @@ pub enum Decoding {
 trait Decodeable {
     type Error;
     type Unit;
-    fn try_decode<F: Fn(Self::Unit)>(
+    fn try_decode<F: Fn(Result<Self::Unit, Self::Error>) -> Result<(), Self::Error>>(
         &mut self,
         input: Split<&str>,
         callback: F,
     ) -> Result<Decoding, Self::Error>;
 }
 
+fn expect_token<'a, T, F: (Fn(Result<T, Error>) -> Result<(), Error>) + 'a>(
+    _step: &'static str,
+    message: &'a str,
+    callback: &'a F,
+) -> impl Fn(&'static str) -> Result<(), Error> + 'a {
+    move |expected| {
+        if message != expected {
+            callback(Err(Error::UnexpectedToken {
+                expected,
+                actual: message.to_string(),
+            }))
+        } else {
+            Ok(())
+        }
+    }
+}
+
 impl Decodeable for PartialArtifactLog {
     type Error = Error;
     type Unit = Artifact;
 
-    fn try_decode<F: Fn(Self::Unit)>(
+    fn try_decode<F: Fn(Result<Self::Unit, Self::Error>) -> Result<(), Self::Error>>(
         &mut self,
         mut input: Split<&str>,
         callback: F,
@@ -84,13 +95,15 @@ impl Decodeable for PartialArtifactLog {
             .next()
             .expect("no message passed to partial artifact build logger");
 
+        let verifier = expect_token("partial artifact", message, &callback);
+
         // Temporarily replace the contents of "self" with an empty PartialArtifactLog::Root
         // take the old content of self and mutate it, then replace the *self reference with
         // the mutated version. This is basically a funky way of doing a mutate-in-place for
         // a mutable reference to an enum.
         *self = match std::mem::replace(self, PartialArtifactLog::Root) {
             PartialArtifactLog::Root => {
-                expect_message("partial artifact", "builder-id", message);
+                verifier("builder-id")?;
 
                 let id = input.next().expect("no builder id specified");
                 PartialArtifactLog::BuilderId {
@@ -98,7 +111,7 @@ impl Decodeable for PartialArtifactLog {
                 }
             }
             PartialArtifactLog::BuilderId { builder_id } => {
-                expect_message("partial artifact", "id", message);
+                verifier("id")?;
 
                 let id = match input.next().expect("no id specified") {
                     "" => None,
@@ -108,7 +121,7 @@ impl Decodeable for PartialArtifactLog {
                 PartialArtifactLog::Id { builder_id, id }
             }
             PartialArtifactLog::Id { builder_id, id } => {
-                expect_message("partial artifact", "string", message);
+                verifier("string")?;
 
                 let string = input.next().expect("no builder id specified").to_string();
                 PartialArtifactLog::String {
@@ -122,7 +135,7 @@ impl Decodeable for PartialArtifactLog {
                 id,
                 string,
             } => {
-                expect_message("partial artifact", "files-count", message);
+                verifier("files-count")?;
                 let count: usize = input
                     .next()
                     .expect("no file count specified")
@@ -145,7 +158,7 @@ impl Decodeable for PartialArtifactLog {
                 mut files,
             } => {
                 if count == 0 {
-                    expect_message("partial artifact", "end", message);
+                    verifier("end")?;
 
                     let artifact = Artifact {
                         builder_id,
@@ -153,10 +166,10 @@ impl Decodeable for PartialArtifactLog {
                         files: files.into_iter().map(Option::unwrap).collect(),
                     };
 
-                    callback(artifact.clone());
+                    callback(Ok(artifact.clone()))?;
                     PartialArtifactLog::Done(artifact)
                 } else {
-                    expect_message("partial artifact", "file", message);
+                    verifier("file")?;
 
                     let file_id: usize =
                         input.next().expect("no file id specified").parse().unwrap();
@@ -200,10 +213,10 @@ enum BuildLogEventKind {
 }
 
 impl Decodeable for PartialBuildLog {
-    type Error = String;
+    type Error = Error;
     type Unit = BuildLogEventKind;
 
-    fn try_decode<F: Fn(Self::Unit)>(
+    fn try_decode<F: Fn(Result<Self::Unit, Self::Error>) -> Result<(), Self::Error>>(
         &mut self,
         mut input: Split<&str>,
         callback: F,
@@ -212,9 +225,12 @@ impl Decodeable for PartialBuildLog {
             .next()
             .expect("no message passed to partial artifact build logger");
 
+        let verifier = expect_token("partial artifact", message, &callback);
+
         *self = match std::mem::replace(self, PartialBuildLog::Root) {
             PartialBuildLog::Root => {
-                expect_message("partial build", "artifact-count", message);
+                verifier("artifact-count")?;
+
                 let count: usize = input
                     .next()
                     .expect("no artifact count specified")
@@ -230,7 +246,7 @@ impl Decodeable for PartialBuildLog {
                 mut count,
                 mut artifacts,
             } => {
-                expect_message("partial build", "artifact", message);
+                verifier("artifact")?;
 
                 let artifact_id: usize = input
                     .next()
@@ -241,7 +257,7 @@ impl Decodeable for PartialBuildLog {
                 let decoded_artifact = artifacts[artifact_id]
                     .get_or_insert(PartialArtifactLog::Root)
                     .try_decode(input, |artifact| {
-                        callback(BuildLogEventKind::Artifact(artifact))
+                        callback(Ok(BuildLogEventKind::Artifact(artifact?)))
                     })
                     .unwrap();
 
@@ -262,7 +278,7 @@ impl Decodeable for PartialBuildLog {
                             .collect(),
                     };
 
-                    callback(BuildLogEventKind::Done(build.clone()));
+                    callback(Ok(BuildLogEventKind::Done(build.clone())))?;
 
                     PartialBuildLog::Done(build)
                 } else {
@@ -286,9 +302,9 @@ pub struct EventLog {
 }
 
 impl Decodeable for EventLog {
-    type Error = String;
+    type Error = Error;
     type Unit = Event;
-    fn try_decode<F: Fn(Self::Unit)>(
+    fn try_decode<F: Fn(Result<Self::Unit, Self::Error>) -> Result<(), Self::Error>>(
         &mut self,
         mut input: Split<&str>,
         callback: F,
@@ -312,22 +328,22 @@ impl Decodeable for EventLog {
                 _ => panic!("unexpected global message_type: {}", message_type),
             };
 
-            callback(Event { timestamp, kind });
+            callback(Ok(Event { timestamp, kind }))?;
         } else {
             let enrich = |build_event| {
-                callback(Event {
+                callback(Ok(Event {
                     // We have to clone the timestamp here to make this function Fn and not FnOnce,
                     // because the function could be called multiple times from the following
                     // Decodeable::try_decode call.
                     timestamp: timestamp.clone(),
-                    kind: match build_event {
+                    kind: match build_event? {
                         BuildLogEventKind::Artifact(artifact) => EventKind::Artifact {
                             build_name: build_name.to_string(),
                             artifact,
                         },
                         BuildLogEventKind::Done(build) => EventKind::Build { build },
                     },
-                })
+                }))
             };
 
             let log = self
@@ -354,7 +370,8 @@ mod tests {
         let mut log = EventLog::default();
         for line in raw_log.lines() {
             log.try_decode(line.split(","), |event| {
-                println!("{:#?}", event);
+                println!("{:#?}", event.unwrap());
+                Ok(())
             })
             .unwrap();
         }

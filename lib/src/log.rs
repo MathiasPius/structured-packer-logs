@@ -55,7 +55,7 @@ pub enum Decoding {
     Done,
 }
 
-trait Decodeable {
+pub trait Decodeable {
     type Error;
     type Unit;
     fn try_decode<F: Fn(Result<Self::Unit, Self::Error>) -> Result<(), Self::Error>>(

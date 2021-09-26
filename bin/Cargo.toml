@@ -1,0 +1,12 @@
+[package]
+name = "structured-packer-logs-cli"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structured-packer-logs = { path = "../lib" }
+clap = { version = "3.0.0-beta.4" }
+indoc = "1.0.3"
+serde = { version = "1.0.130", features = ["derive"]}

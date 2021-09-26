@@ -7,8 +7,8 @@ pub enum UI {
 
 #[derive(Debug, Clone)]
 pub struct Event {
-    pub(crate) timestamp: String,
-    pub(crate) kind: EventKind,
+    pub timestamp: String,
+    pub kind: EventKind,
 }
 
 #[derive(Debug, Clone)]
